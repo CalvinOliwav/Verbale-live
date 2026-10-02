@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Verbale Live</title>
+<style>
+  @import url('https://cdnjs.cloudflare.com/ajax/libs/typeface-space-mono/1.1.13/index.css');
+  @import url('https://cdnjs.cloudflare.com/ajax/libs/typeface-source-serif-pro/1.1.13/index.css');
+
+  :root{
+    --paper:#F7F4EC;
+    --ink:#1F2A24;
+    --ink-soft:#5B6660;
+    --line:#D8D2C0;
+    --accent:#B23B2E;
+    --accent-soft:#E8DDD3;
+    --ok:#3C6E52;
+    --card:#FFFFFF;
+    --radius:2px;
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--paper) 39px, var(--line) 40px);
+    background-size: 100% 40px;
+    color:var(--ink);
+    font-family:'Source Serif Pro', Georgia, serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:720px;margin:0 auto;padding:20px 18px 100px;}
+
+  header{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:14px 0 18px;border-bottom:2px solid var(--ink);
+    margin-bottom:22px;
+  }
+  header .eyebrow{
+    font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-soft);
+  }
+  header h1{
+    font-size:22px;margin:2px 0 0;font-weight:600;letter-spacing:-.01em;
+  }
+  header .date{
+    font-family:'Space Mono',monospace;font-size:12px;color:var(--ink-soft);
+    text-align:right;
+  }
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+    box-shadow:0 1px 0 rgba(31,42,36,.03);
+  }
+  .panel h2{
+    font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .panel h2::before{content:'';width:14px;height:1px;background:var(--line);}
+
+  .meta-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .meta-field{flex:1;min-width:140px;}
+  .meta-field label{
+    display:block;font-family:'Space Mono',monospace;font-size:10px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
+    margin-bottom:5px;
+  }
+  .meta-field input{
+    width:100%;border:none;border-bottom:1px solid var(--line);
+    background:transparent;font-family:'Source Serif Pro',serif;
+    font-size:15px;color:var(--ink);padding:4px 2px;outline:none;
+  }
+  .meta-field input:focus{border-bottom-color:var(--accent);}
+
+  .rec-zone{
+    display:flex;flex-direction:column;align-items:center;
+    padding:28px 20px 20px;
+  }
+  .mic-btn{
+    width:88px;height:88px;border-radius:50%;
+    background:var(--ink);border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;transition:background .2s ease;
+  }
+  .mic-btn svg{width:32px;height:32px;fill:var(--paper);}
+  .mic-btn.recording{background:var(--accent);}
+  .mic-btn.recording::before{
+    content:'';position:absolute;inset:-8px;border-radius:50%;
+    border:2px solid var(--accent);animation:pulse 1.6s ease-out infinite;
+  }
+  @keyframes pulse{
+    0%{transform:scale(.9);opacity:.9;}
+    100%{transform:scale(1.45);opacity:0;}
+  }
+  .rec-status{
+    font-family:'Space Mono',monospace;font-size:12px;color:var(--ink-soft);
+    margin-top:14px;letter-spacing:.04em;
+  }
+  .rec-status.live{color:var(--accent);}
+  .rec-timer{
+    font-family:'Space Mono',monospace;font-size:26px;color:var(--ink);
+    margin-top:6px;font-weight:700;letter-spacing:.02em;
+  }
+  .rec-controls{display:flex;gap:10px;margin-top:16px;}
+  .btn-small{
+    font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.06em;
+    text-transform:uppercase;border:1px solid var(--ink);background:transparent;
+    color:var(--ink);padding:8px 14px;border-radius:var(--radius);cursor:pointer;
+  }
+  .btn-small:disabled{opacity:.35;cursor:not-allowed;}
+  .btn-small:active:not(:disabled){background:var(--ink);color:var(--paper);}
+
+  .transcript-box{
+    min-height:160px;max-height:38vh;overflow-y:auto;
+    font-size:15px;line-height:1.65;color:var(--ink);
+    white-space:pre-wrap;
+  }
+  .transcript-box .placeholder{color:var(--ink-soft);font-style:italic;}
+  .transcript-box .interim{color:var(--ink-soft);}
+
+  .word-count{
+    font-family:'Space Mono',monospace;font-size:10px;color:var(--ink-soft);
+    text-align:right;margin-top:8px;letter-spacing:.05em;
+  }
+
+  .action-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn-main{
+    flex:1;min-width:130px;
+    font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.06em;
+    text-transform:uppercase;border:1px solid var(--ink);
+    background:var(--ink);color:var(--paper);
+    padding:13px 14px;border-radius:var(--radius);cursor:pointer;
+    text-align:center;
+  }
+  .btn-main.ghost{background:transparent;color:var(--ink);}
+  .btn-main:disabled{opacity:.3;cursor:not-allowed;}
+
+  .prompt-out{
+    background:var(--accent-soft);border:1px solid var(--line);
+    border-radius:var(--radius);padding:16px;margin-top:14px;
+    font-family:'Space Mono',monospace;font-size:12px;line-height:1.7;
+    color:var(--ink);white-space:pre-wrap;display:none;
+  }
+  .prompt-out.show{display:block;}
+
+  .copy-confirm{
+    font-family:'Space Mono',monospace;font-size:11px;color:var(--ok);
+    margin-top:10px;letter-spacing:.04em;opacity:0;transition:opacity .2s;
+  }
+  .copy-confirm.show{opacity:1;}
+
+  .support-note{
+    font-family:'Space Mono',monospace;font-size:10.5px;color:var(--ink-soft);
+    line-height:1.6;padding:14px 4px 0;text-align:center;
+  }
+
+  .compat-warning{
+    background:#F4E4DF;border:1px solid var(--accent);color:var(--ink);
+    padding:14px 16px;border-radius:var(--radius);font-size:13px;
+    margin-bottom:16px;display:none;line-height:1.5;
+  }
+  .compat-warning.show{display:block;}
+
+  ::-webkit-scrollbar{width:5px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="eyebrow">Verbale Live · Riunioni Scolastiche</div>
+      <h1>Trascrizione &amp; Verbale</h1>
+    </div>
+    <div class="date" id="today-date"></div>
+  </header>
+
+  <div class="compat-warning" id="compat-warning">
+    Questo browser non supporta la trascrizione vocale dal vivo. Usa <strong>Chrome</strong> su Android per la funzione di ascolto automatico — puoi comunque scrivere o incollare il testo manualmente qui sotto.
+  </div>
+
+  <div class="panel">
+    <h2>Dati riunione</h2>
+    <div class="meta-row">
+      <div class="meta-field">
+        <label for="f-titolo">Oggetto</label>
+        <input id="f-titolo" type="text" placeholder="Es. Consiglio di classe 3B">
+      </div>
+      <div class="meta-field">
+        <label for="f-presenti">Presenti</label>
+        <input id="f-presenti" type="text" placeholder="Nomi, separati da virgola">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Registrazione</h2>
+    <div class="rec-zone">
+      <button class="mic-btn" id="mic-btn" aria-label="Avvia registrazione">
+        <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.92V21h2v-3.08A7 7 0 0019 11h-2z"/></svg>
+      </button>
+      <div class="rec-status" id="rec-status">Tocca per iniziare ad ascoltare</div>
+      <div class="rec-timer" id="rec-timer">00:00</div>
+      <div class="rec-controls">
+        <button class="btn-small" id="pause-btn" disabled>Pausa</button>
+        <button class="btn-small" id="clear-btn">Svuota</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Trascrizione</h2>
+    <div class="transcript-box" id="transcript-box">
+      <span class="placeholder">La trascrizione dal vivo comparirà qui man mano che si parla. Puoi anche scrivere o incollare testo direttamente in questa casella.</span>
+    </div>
+    <div class="word-count" id="word-count"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Genera verbale</h2>
+    <div class="action-row">
+      <button class="btn-main" id="build-prompt-btn">Prepara prompt per Claude</button>
+      <button class="btn-main ghost" id="download-btn">Scarica trascrizione (.txt)</button>
+    </div>
+    <div class="prompt-out" id="prompt-out"></div>
+    <div class="copy-confirm" id="copy-confirm">✓ Copiato negli appunti — incollalo in una chat con Claude</div>
+  </div>
+
+  <div class="support-note">
+    Funziona offline per la trascrizione (motore vocale del telefono).<br>
+    Nessun dato lascia il tuo dispositivo: tutto resta nel browser.
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // ---------- Data odierna ----------
+  const dateEl = document.getElementById('today-date');
+  const now = new Date();
+  dateEl.textContent = now.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+
+  // ---------- Stato ----------
+  // I segmenti "final" sono tenuti in un array indicizzato da event.results[i],
+  // non concatenati in una stringa: su Chrome Android, dopo un riavvio
+  // automatico del riconoscimento, resultIndex può ripresentare un indice
+  // già elaborato. Scrivere in finalSegments[i] invece di fare += evita che
+  // lo stesso segmento venga accodato due volte (bug delle parole doppie).
+  let finalSegments = [];
+  let interimTranscript = '';
+  let recognition = null;
+  let isRecording = false;
+  let isPaused = false;
+  let timerInterval = null;
+  let secondsElapsed = 0;
+  let manuallyStopped = false;
+  let restartTimeoutId = null;
+
+  const micBtn = document.getElementById('mic-btn');
+  const pauseBtn = document.getElementById('pause-btn');
+  const clearBtn = document.getElementById('clear-btn');
+  const recStatus = document.getElementById('rec-status');
+  const recTimer = document.getElementById('rec-timer');
+  const transcriptBox = document.getElementById('transcript-box');
+  const wordCount = document.getElementById('word-count');
+  const compatWarning = document.getElementById('compat-warning');
+  const buildPromptBtn = document.getElementById('build-prompt-btn');
+  const downloadBtn = document.getElementById('download-btn');
+  const promptOut = document.getElementById('prompt-out');
+  const copyConfirm = document.getElementById('copy-confirm');
+
+  // ---------- Supporto browser ----------
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const supported = !!SpeechRecognition;
+
+  // Il riconoscimento vocale del browser richiede un "contesto sicuro"
+  // (https://, oppure localhost). Aperta come file:// (es. da Drive o da
+  // Download, il caso più comune su Android), l'API può SEMBRARE attiva —
+  // il microfono si accende, lo stato resta su "In ascolto..." — ma il
+  // servizio di riconoscimento scarta la richiesta senza generare alcun
+  // errore visibile: risultato, nessuna parola trascritta mai. Questo è
+  // diverso da "non supportato": qui l'API esiste, semplicemente non può
+  // funzionare in questo contesto, quindi serve un avviso dedicato.
+  const insecureContext = window.isSecureContext === false;
+
+  if(!supported){
+    compatWarning.classList.add('show');
+    micBtn.disabled = true;
+    micBtn.style.opacity = '.35';
+    micBtn.style.cursor = 'not-allowed';
+  } else if(insecureContext){
+    compatWarning.innerHTML = 'Questa pagina è aperta in modalità non sicura (probabilmente da un file scaricato). Il browser accende il microfono ma <strong>non può trascrivere</strong> in questa modalità: la trascrizione resterà sempre vuota, senza mostrare alcun errore. Serve ospitare il file su un indirizzo che inizia con <strong>https://</strong> — chiedi a Claude &quot;come pubblico questa pagina online gratis&quot; per la procedura. Nel frattempo puoi comunque scrivere o incollare il testo manualmente qui sotto.';
+    compatWarning.classList.add('show');
+    micBtn.disabled = true;
+    micBtn.style.opacity = '.35';
+    micBtn.style.cursor = 'not-allowed';
+  }
+
+  // Rete di sicurezza aggiuntiva: anche se insecureContext risultasse false
+  // per qualche motivo (rilevamento non garantito su tutte le build di
+  // Chrome Android) ma il problema si presenta comunque, un timeout dopo
+  // l'avvio senza alcun risultato ricevuto avvisa l'utente invece di
+  // lasciarlo indefinitamente su "In ascolto...".
+  let silenceWatchdogId = null;
+  let everReceivedResult = false;
+
+  function startSilenceWatchdog(){
+    clearSilenceWatchdog();
+    everReceivedResult = false;
+    silenceWatchdogId = setTimeout(function(){
+      if(isRecording && !isPaused && !everReceivedResult){
+        recStatus.textContent = 'Nessuna parola rilevata. Verifica che il microfono non sia in uso da un\'altra app, oppure che la pagina non sia aperta da un file locale (serve https://).';
+        recStatus.classList.remove('live');
+      }
+    }, 6000);
+  }
+
+  function clearSilenceWatchdog(){
+    if(silenceWatchdogId){ clearTimeout(silenceWatchdogId); silenceWatchdogId = null; }
+  }
+
+  // ---------- Rendering trascrizione ----------
+  function getFinalText(){
+    // Filtra gli slot vuoti (indici non ancora raggiunti) e unisce in ordine.
+    return finalSegments.filter(Boolean).join(' ');
+  }
+
+  function renderTranscript(){
+    const finalText = getFinalText();
+    const hasContent = finalText.trim().length > 0 || interimTranscript.trim().length > 0;
+    if(!hasContent){
+      transcriptBox.innerHTML = '<span class="placeholder">La trascrizione dal vivo comparirà qui man mano che si parla. Puoi anche scrivere o incollare testo direttamente in questa casella.</span>';
+      wordCount.textContent = '';
+      return;
+    }
+    let html = escapeHtml(finalText);
+    if(interimTranscript){
+      html += (finalText ? ' ' : '') + '<span class="interim">' + escapeHtml(interimTranscript) + '</span>';
+    }
+    transcriptBox.innerHTML = html;
+    transcriptBox.scrollTop = transcriptBox.scrollHeight;
+    const words = finalText.trim().split(/\s+/).filter(Boolean).length;
+    wordCount.textContent = words + ' parole';
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Permetti anche digitazione/incolla manuale
+  transcriptBox.setAttribute('contenteditable', 'true');
+  transcriptBox.addEventListener('focus', function(){
+    if(getFinalText().trim().length === 0 && interimTranscript.trim().length === 0){
+      transcriptBox.innerHTML = '';
+    }
+  });
+  transcriptBox.addEventListener('input', function(){
+    if(!isRecording){
+      // L'utente sta editando a mano: da qui in poi il testo "vero" è
+      // quello scritto nella casella, quindi collassiamo tutto in un unico
+      // segmento. Alla prossima registrazione, i nuovi risultati vocali si
+      // aggiungeranno a partire dall'indice 1 in poi (vedi onresult).
+      finalSegments = [transcriptBox.innerText];
+    }
+  });
+  transcriptBox.addEventListener('blur', function(){
+    if(!isRecording) renderTranscript();
+  });
+
+  // ---------- Timer ----------
+  function formatTime(s){
+    const m = Math.floor(s/60).toString().padStart(2,'0');
+    const sec = (s%60).toString().padStart(2,'0');
+    return m + ':' + sec;
+  }
+  function startTimer(){
+    timerInterval = setInterval(function(){
+      secondsElapsed++;
+      recTimer.textContent = formatTime(secondsElapsed);
+    }, 1000);
+  }
+  function stopTimer(){
+    clearInterval(timerInterval);
+  }
+
+  // ---------- Riconoscimento vocale ----------
+  function createRecognition(){
+    const r = new SpeechRecognition();
+    r.lang = 'it-IT';
+    r.continuous = true;
+    r.interimResults = true;
+
+    r.onresult = function(event){
+      // Arriva un risultato vero (anche solo interim): il riconoscimento sta
+      // funzionando davvero, quindi disinneschiamo il controllo di silenzio
+      // e, se era scattato un avviso precedente, ripristiniamo lo stato normale.
+      everReceivedResult = true;
+      clearSilenceWatchdog();
+      if(isRecording && !isPaused){
+        recStatus.textContent = 'In ascolto...';
+        recStatus.classList.add('live');
+      }
+      interimTranscript = '';
+      for(let i = event.resultIndex; i < event.results.length; i++){
+        const transcriptPiece = event.results[i][0].transcript;
+        if(event.results[i].isFinal){
+          // Scriviamo nello slot i, non accodiamo: se questo indice è già
+          // stato scritto in una passata precedente (può succedere dopo un
+          // riavvio automatico su Chrome Android), lo sovrascriviamo con lo
+          // stesso contenuto invece di duplicarlo in coda. Questo elimina
+          // il bug delle parole ripetute due volte.
+          finalSegments[i] = transcriptPiece.trim();
+        } else {
+          interimTranscript += transcriptPiece;
+        }
+      }
+      renderTranscript();
+    };
+
+    r.onerror = function(event){
+      if(event.error === 'no-speech' || event.error === 'network'){
+        return; // errori transitori, il riavvio automatico gestisce il resto
+      }
+      if(event.error === 'not-allowed' || event.error === 'service-not-allowed'){
+        // 'not-allowed' qui non significa sempre "permesso negato dall'utente":
+        // su Chrome Android compare spesso anche quando il riconoscimento
+        // viene riavviato troppo rapidamente dopo un onend, prima che il
+        // sistema abbia rilasciato il microfono. Se stavamo registrando e
+        // non è stato un arresto manuale, proviamo un riavvio ritardato
+        // invece di arrenderci subito; solo se anche questo fallisce diciamo
+        // davvero all'utente di controllare i permessi.
+        if(isRecording && !isPaused && !manuallyStopped){
+          scheduleRestart();
+        } else {
+          recStatus.textContent = 'Permesso microfono negato. Controlla le impostazioni del browser.';
+          recStatus.classList.remove('live');
+          stopRecording(true);
+        }
+      }
+    };
+
+    r.onend = function(){
+      // Il motore vocale si interrompe periodicamente da solo (ogni 60
+      // secondi circa): se l'utente non ha fermato manualmente e non è in
+      // pausa, lo riavviamo. Un riavvio IMMEDIATO (r.start() qui dentro,
+      // sincrono) a volte arriva prima che Android abbia rilasciato il
+      // microfono dalla sessione precedente: Chrome lo rifiuta con un
+      // errore che sembra "permesso negato" anche se l'utente lo ha
+      // concesso. Un piccolo ritardo risolve il problema.
+      if(isRecording && !isPaused && !manuallyStopped){
+        scheduleRestart();
+      }
+    };
+
+    return r;
+  }
+
+  function scheduleRestart(){
+    if(restartTimeoutId) return; // riavvio già in coda, non accavallarne un altro
+    restartTimeoutId = setTimeout(function(){
+      restartTimeoutId = null;
+      if(!isRecording || isPaused || manuallyStopped) return;
+      recognition = createRecognition();
+      try{
+        recognition.start();
+        startSilenceWatchdog();
+      }catch(e){
+        // Il motore segnala ancora occupato: ritentiamo una volta sola
+        // dopo un'attesa leggermente più lunga.
+        restartTimeoutId = setTimeout(function(){
+          restartTimeoutId = null;
+          if(!isRecording || isPaused || manuallyStopped) return;
+          try{
+            recognition = createRecognition();
+            recognition.start();
+          }catch(e2){
+            recStatus.textContent = 'Il microfono non risponde. Riprova a toccare il pulsante.';
+            recStatus.classList.remove('live');
+            stopRecording(true);
+          }
+        }, 600);
+      }
+    }, 300);
+  }
+
+  function startRecording(){
+    if(!supported) return;
+    manuallyStopped = false;
+    if(restartTimeoutId){ clearTimeout(restartTimeoutId); restartTimeoutId = null; }
+    recognition = createRecognition();
+    try{
+      recognition.start();
+    }catch(e){
+      console.error(e);
+      return;
+    }
+    isRecording = true;
+    isPaused = false;
+    micBtn.classList.add('recording');
+    pauseBtn.disabled = false;
+    pauseBtn.textContent = 'Pausa';
+    recStatus.textContent = 'In ascolto...';
+    recStatus.classList.add('live');
+    startTimer();
+    startSilenceWatchdog();
+  }
+
+  function pauseRecording(){
+    clearSilenceWatchdog();
+    if(restartTimeoutId){ clearTimeout(restartTimeoutId); restartTimeoutId = null; }
+    if(recognition){
+      manuallyStopped = true;
+      recognition.stop();
+    }
+    isPaused = true;
+    micBtn.classList.remove('recording');
+    pauseBtn.textContent = 'Riprendi';
+    recStatus.textContent = 'In pausa';
+    recStatus.classList.remove('live');
+    stopTimer();
+  }
+
+  function resumeRecording(){
+    manuallyStopped = false;
+    if(restartTimeoutId){ clearTimeout(restartTimeoutId); restartTimeoutId = null; }
+    recognition = createRecognition();
+    try{ recognition.start(); }catch(e){ console.error(e); }
+    isPaused = false;
+    micBtn.classList.add('recording');
+    pauseBtn.textContent = 'Pausa';
+    recStatus.textContent = 'In ascolto...';
+    recStatus.classList.add('live');
+    startTimer();
+    startSilenceWatchdog();
+  }
+
+  function stopRecording(silent){
+    manuallyStopped = true;
+    clearSilenceWatchdog();
+    if(restartTimeoutId){ clearTimeout(restartTimeoutId); restartTimeoutId = null; }
+    if(recognition){
+      recognition.stop();
+    }
+    isRecording = false;
+    isPaused = false;
+    micBtn.classList.remove('recording');
+    pauseBtn.disabled = true;
+    pauseBtn.textContent = 'Pausa';
+    if(!silent){
+      recStatus.textContent = 'Registrazione terminata';
+      recStatus.classList.remove('live');
+    }
+    stopTimer();
+    interimTranscript = '';
+    renderTranscript();
+  }
+
+  micBtn.addEventListener('click', function(){
+    if(!supported) return;
+    if(!isRecording){
+      startRecording();
+    } else {
+      stopRecording(false);
+    }
+  });
+
+  pauseBtn.addEventListener('click', function(){
+    if(isPaused){
+      resumeRecording();
+    } else {
+      pauseRecording();
+    }
+  });
+
+  clearBtn.addEventListener('click', function(){
+    if(getFinalText().trim().length > 0){
+      const ok = confirm('Svuotare la trascrizione? L\'azione non è reversibile.');
+      if(!ok) return;
+    }
+    finalSegments = [];
+    interimTranscript = '';
+    secondsElapsed = 0;
+    recTimer.textContent = '00:00';
+    renderTranscript();
+    promptOut.classList.remove('show');
+    copyConfirm.classList.remove('show');
+  });
+
+  // ---------- Costruzione prompt ----------
+  function buildPrompt(){
+    const titolo = document.getElementById('f-titolo').value.trim() || '(non specificato)';
+    const presenti = document.getElementById('f-presenti').value.trim() || '(non specificato)';
+    const dataStr = now.toLocaleDateString('it-IT', {day:'2-digit', month:'long', year:'numeric'});
+    const testo = getFinalText().trim();
+
+    if(!testo){
+      alert('Non c\'è ancora nessuna trascrizione da elaborare. Registra o incolla del testo prima di generare il prompt.');
+      return null;
+    }
+
+    return `Agisci come segretario/a verbalizzante di riunioni scolastiche. Di seguito trovi la trascrizione grezza e automatica di una riunione: potrebbe contenere ripetizioni, errori di riconoscimento vocale, false partenze o frasi interrotte. Il tuo compito è trasformarla in un verbale professionale e leggibile, SENZA inventare contenuti non presenti nel testo.
+
+DATI RIUNIONE
+- Oggetto: ${titolo}
+- Data: ${dataStr}
+- Presenti: ${presenti}
+
+ISTRUZIONI
+Restituisci il verbale con questa identica struttura, in italiano formale ma chiaro:
+
+1. INTESTAZIONE
+   Oggetto, data, presenti (come sopra, riportali fedelmente).
+
+2. SINTESI GENERALE (3-5 righe)
+   Di cosa ha trattato la riunione nel complesso.
+
+3. PUNTI CHIAVE DISCUSSI
+   Elenco puntato dei temi affrontati, in ordine cronologico, con una frase di spiegazione per ciascuno.
+
+4. DECISIONI PRESE
+   Elenco puntato delle decisioni definitive prese durante la riunione. Se non è stata presa alcuna decisione su un punto, scrivi "Nessuna decisione formale, punto rimandato".
+
+5. AZIONI SUCCESSIVE (ACTION ITEM)
+   Tabella o elenco con: Cosa va fatto | Chi se ne occupa (se menzionato, altrimenti "Non specificato") | Entro quando (se menzionato, altrimenti "Non specificato").
+
+6. CONCLUSIONI E PROSSIMI PASSI
+   Breve paragrafo finale su come si è chiusa la riunione ed eventuale data del prossimo incontro se menzionata.
+
+REGOLE IMPORTANTI
+- Ripulisci il testo da ripetizioni, intercalari (“ecco”, “cioè”, “quindi diciamo”) e refusi di trascrizione, ma non alterare il significato di quanto detto.
+- Se una parte del testo è ambigua o incomprensibile, scrivi "[passaggio poco chiaro nella registrazione]" invece di indovinare il contenuto.
+- Non aggiungere opinioni, giudizi o informazioni che non provengono dalla trascrizione.
+- Usa un tono neutro e istituzionale, adatto a un verbale scolastico ufficiale.
+
+TRASCRIZIONE GREZZA DA ELABORARE:
+"""
+${testo}
+"""`;
+  }
+
+  buildPromptBtn.addEventListener('click', function(){
+    const prompt = buildPrompt();
+    if(!prompt) return;
+    promptOut.textContent = prompt;
+    promptOut.classList.add('show');
+    copyConfirm.classList.remove('show');
+
+    // Tenta la copia automatica negli appunti
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(prompt).then(function(){
+        copyConfirm.classList.add('show');
+      }).catch(function(){
+        // fallback silenzioso: il testo resta comunque visibile e selezionabile
+      });
+    }
+    promptOut.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+
+  downloadBtn.addEventListener('click', function(){
+    const testo = getFinalText().trim();
+    if(!testo){
+      alert('Non c\'è ancora nessuna trascrizione da scaricare.');
+      return;
+    }
+    const titolo = document.getElementById('f-titolo').value.trim() || 'trascrizione';
+    const safeTitolo = titolo.replace(/[^a-z0-9àèéìòù\s-]/gi, '').trim().replace(/\s+/g, '_') || 'trascrizione';
+    const dataFile = now.toISOString().slice(0,10);
+    const blob = new Blob([testo], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safeTitolo + '_' + dataFile + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // Avviso prima di lasciare la pagina durante una registrazione attiva
+  window.addEventListener('beforeunload', function(e){
+    if(isRecording){
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
